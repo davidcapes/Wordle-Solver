@@ -362,7 +362,7 @@ def construct_opening_book(opening_book_directory="../files/opening_book.json"):
             constraints.grid[0][i].color = c
         choice_word = choose_word(constraints)
         if choice_word != NULL_WORD and choice_word != first_word:
-            opening_book[str(constraints)] = choose_word(constraints)
+            opening_book[str(constraints)] = choice_word
         for i, c in enumerate(color_choice):
             constraints.grid[0][i].color = Color.GREY
 
