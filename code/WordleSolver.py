@@ -257,7 +257,7 @@ def enc_get_scores(encoded_words, chars_not_present, char_placements, char_nonpl
             score_increment = max(0, score_increment - 1)
             score += score_increment
 
-        # Calculate overall score for guess_word.
+        # Slightly bias the score to favour consistant guess words.
         if not enc_is_word_consistent(guess_word, chars_not_present, char_placements, char_nonplacements,
                                       word_length, alphabet_length):
             score += 1
