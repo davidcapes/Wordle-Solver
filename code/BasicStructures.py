@@ -52,7 +52,7 @@ class Square:
 class Constraints:
 
     def __init__(self):
-        self.grid = np.array([[Square() for c in range(COLUMNS)] for r in range(ROWS)])
+        self.grid = np.array([[Square() for _ in range(COLUMNS)] for _ in range(ROWS)])
 
     def __str__(self):
         hashable = []

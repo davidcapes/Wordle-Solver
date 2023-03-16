@@ -1,14 +1,11 @@
 import json
-import time
 import itertools
 
-import numpy as np
 from numba import njit, prange
 from wordfreq import word_frequency
 from english_words import get_english_words_set
 
 from BasicStructures import *
-
 
 # Macros / Global Constants
 WORD_LENGTH = 5
@@ -22,31 +19,35 @@ NULL_WORD = NULL_CHAR * WORD_LENGTH
 def char_to_int(input_char):
     return ord(input_char) - ord('a')
 
+
 def int_to_char(input_int):
     return chr(ord('a') + input_int)
 
 
 # Constraint Storage Structures
 extra_words = ["manly", "mucky", "latte", "imply", "daily", "lover", "rerun", "unfit"]
-fake_words = {'brady', 'turin', 'dylan', 'dolan', 'lanka', 'milan', 'cathy',  "alton", 'mckee', 'mcgee', 'poole',
-              'della', 'dinah', 'syria', 'injun', 'akron'}
+fake_words = {'brady', 'turin', 'dylan', 'dolan', 'lanka', 'milan', 'cathy', "alton", 'mckee', 'mcgee', 'poole',
+              'della', 'dinah', 'syria', 'akron'}
 
 
 @njit
 def enc_is_word_consistent(encoded_word, chars_not_present, char_placements, char_nonplacements,
                            word_length=WORD_LENGTH, alphabet_length=ALPHABET_LENGTH):
     """
-    :param encoded_word: A 1-D integer array size=WORD_LENGTH. This array represents a word, each element corresponds
-                         to an alphabetical letter (a=0, b=1, ..., z=25).
-    :param chars_not_present: A 1-D boolean Array size=ALPHABET_LENGTH. The first axis corresponds to letter of
-                            alphabet (a=0, b=1, ...), the value is a boolean representing whether that letter is not
-                            in the word (True=letter definitely not present, False=letter may be present).
-    :param char_placements: A 2-D integer Array size=(ALPHABET_LENGTH, WORD_LENGTH). The first axis corresponds to
-                            letter of alphabet (a=0, b=1, ...), the second axis is this list of indexes that must
-                            contain that corresponding letter. Indexes are set to NULL_INTEGER by default.
-    :param char_nonplacements: A 2-D integer Array size=(ALPHABET_LENGTH, WORD_LENGTH). The first axis corresponds to
-                               letter of alphabet (a=0, b=1, ...), the second axis is this list of indexes that are not
-                               allowed to contain that corresponding letter. Indexes are set to NULL_INTEGER by default.
+    :param encoded_word: A 1-D integer array with size=WORD_LENGTH. This array represents a word, each element
+                         corresponds to an alphabetical letter (a=0, b=1, ..., z=25).
+    :param chars_not_present: A 1-D boolean Array size=ALPHABET_LENGTH. The index of the array corresponds to letter of
+                              alphabet (a=0, b=1, ...), the value at that index is a boolean representing whether that
+                              letter is not in the underlying word (True=letter definitely not present,
+                              False=letter may be present).
+    :param char_placements: A 2-D integer Array size=(ALPHABET_LENGTH, WORD_LENGTH). The first index corresponds to
+                            letter of alphabet (a=0, b=1, ...). The value of this index is an array listing the indexes
+                            of the underlying word that must contain that corresponding letter. NULL_INTEGER is used
+                            to initialize empty values.
+    :param char_nonplacements: A 2-D integer Array size=(ALPHABET_LENGTH, WORD_LENGTH). The first index corresponds to
+                               letter of alphabet (a=0, b=1, ...). The value of this index is an array listing the
+                               indexes of the underlying word that must not contain that corresponding letter.
+                               NULL_INTEGER is used to initialize empty values.
     :param word_length: Same value as the macro WORD_LENGTH. Inputted to avoid drawing upon global variables.
     :param alphabet_length: Same value as the macro ALPHABET_LENGTH. Inputted to avoid drawing upon global variables.
 
@@ -75,7 +76,7 @@ def enc_is_word_consistent(encoded_word, chars_not_present, char_placements, cha
     # Ensure consistency with nonplacements.
     for c in range(alphabet_length):
         if char_nonplacements[c][0] != NULL_INTEGER:
-            if not c in encoded_word:
+            if c not in encoded_word:
                 return False
             for position in char_nonplacements[c]:
                 if position == NULL_INTEGER:
@@ -90,18 +91,21 @@ def enc_is_word_consistent(encoded_word, chars_not_present, char_placements, cha
 def enc_get_consistent_words(encoded_words, chars_not_present, char_placements, char_nonplacements,
                              word_length=WORD_LENGTH, alphabet_length=ALPHABET_LENGTH, null_integer=NULL_INTEGER):
     """
-    :param encoded_words: A 2-D integer array size=(unknown, WORD_LENGTH). This array represents a list of words, each
-                         element of the first axis corresponds to an encoded word. Each element of this word (second
-                         axis) corresponds to an alphabetical letter (a=0, b=1, ..., z=25).
-    :param chars_not_present: A 1-D boolean Array size=ALPHABET_LENGTH. The first axis corresponds to letter of
-                            alphabet (a=0, b=1, ...), the value is a boolean representing whether that letter is not
-                            in the word (True=letter definitely not present, False=letter may be present).
-    :param char_placements: A 2-D integer Array size=(ALPHABET_LENGTH, WORD_LENGTH). The first axis corresponds to
-                            letter of alphabet (a=0, b=1, ...), the second axis is this list of indexes that must
-                            contain that corresponding letter. Indexes are set to NULL_INTEGER by default.
-    :param char_nonplacements: A 2-D integer Array size=(ALPHABET_LENGTH, WORD_LENGTH). The first axis corresponds to
-                               letter of alphabet (a=0, b=1, ...), the second axis is this list of indexes that are not
-                               allowed to contain that corresponding letter. Indexes are set to NULL_INTEGER by default.
+    :param encoded_words: A 2-D integer array with size=(len(words), WORD_LENGTH). Each element of this array represents
+                          a word, each element of those elements corresponds to an alphabetical letter (a=0, b=1, ...,
+                          z=25).
+    :param chars_not_present: A 1-D boolean Array size=ALPHABET_LENGTH. The index of the array corresponds to letter of
+                              alphabet (a=0, b=1, ...), the value at that index is a boolean representing whether that
+                              letter is not in the underlying word (True=letter definitely not present,
+                              False=letter may be present).
+    :param char_placements: A 2-D integer Array size=(ALPHABET_LENGTH, WORD_LENGTH). The first index corresponds to
+                            letter of alphabet (a=0, b=1, ...). The value of this index is an array listing the indexes
+                            of the underlying word that must contain that corresponding letter. NULL_INTEGER is used
+                            to initialize empty values.
+    :param char_nonplacements: A 2-D integer Array size=(ALPHABET_LENGTH, WORD_LENGTH). The first index corresponds to
+                               letter of alphabet (a=0, b=1, ...). The value of this index is an array listing the
+                               indexes of the underlying word that must not contain that corresponding letter.
+                               NULL_INTEGER is used to initialize empty values.
     :param word_length: Same value as the macro WORD_LENGTH. Inputted to avoid drawing upon global variables.
     :param alphabet_length: Same value as the macro ALPHABET_LENGTH. Inputted to avoid drawing upon global variables.
     :param null_integer: Same value as the macro NULL_INTEGER. Inputted to avoid drawing upon global variables.
@@ -120,7 +124,8 @@ def enc_get_consistent_words(encoded_words, chars_not_present, char_placements, 
     indexes = np.full(len(encoded_words), inconsistent, dtype=np.int8)
     consistent_words_count = 0
     for i, word in enumerate(encoded_words):
-        if enc_is_word_consistent(word, chars_not_present, char_placements, char_nonplacements, word_length, alphabet_length):
+        if enc_is_word_consistent(word, chars_not_present, char_placements, char_nonplacements, word_length,
+                                  alphabet_length):
             indexes[i] = consistent
             consistent_words_count += 1
 
@@ -140,28 +145,30 @@ def enc_get_consistent_words(encoded_words, chars_not_present, char_placements, 
 def enc_update_constraints(encoded_guess_word, encoded_underlying_word, chars_not_present, char_placements,
                            char_nonplacements, word_length=WORD_LENGTH):
     """
-        :param encoded_guess_word: A 1-D integer array size=WORD_LENGTH. This array represents a word, each element
-                                   corresponds to an alphabetical letter (a=0, b=1, ..., z=25).
-        :param encoded_underlying_word: A 1-D integer array size=WORD_LENGTH. This array represents a word, each
-                                        element corresponds to an alphabetical letter (a=0, b=1, ..., z=25).
-        :param chars_not_present: A 1-D boolean Array size=ALPHABET_LENGTH. The first axis corresponds to letter of
-                                alphabet (a=0, b=1, ...), the value is a boolean representing whether that letter is
-                                not in the word (True=letter definitely not present, False=letter may be present).
-        :param char_placements: A 2-D integer Array size=(ALPHABET_LENGTH, WORD_LENGTH). The first axis corresponds to
-                                letter of alphabet (a=0, b=1, ...), the second axis is this list of indexes that must
-                                contain that corresponding letter. Indexes are set to NULL_INTEGER by default.
-        :param char_nonplacements: A 2-D integer Array size=(ALPHABET_LENGTH, WORD_LENGTH). The first axis corresponds
-                                   to letter of alphabet (a=0, b=1, ...), the second axis is this list of indexes that
-                                   are not allowed to contain that corresponding letter. Indexes are set to
-                                   NULL_INTEGER by default.
-        :param word_length: Same value as the macro WORD_LENGTH. Inputted to avoid drawing upon global variables.
+    :param encoded_guess_word: A 1-D integer array size=WORD_LENGTH. This array represents a word, each element
+                               corresponds to an alphabetical letter (a=0, b=1, ..., z=25).
+    :param encoded_underlying_word: A 1-D integer array size=WORD_LENGTH. This array represents a word, each
+                                    element corresponds to an alphabetical letter (a=0, b=1, ..., z=25).
+    :param chars_not_present: A 1-D boolean Array size=ALPHABET_LENGTH. The index of the array corresponds to letter of
+                              alphabet (a=0, b=1, ...), the value at that index is a boolean representing whether that
+                              letter is not in the underlying word (True=letter definitely not present,
+                              False=letter may be present).
+    :param char_placements: A 2-D integer Array size=(ALPHABET_LENGTH, WORD_LENGTH). The first index corresponds to
+                            letter of alphabet (a=0, b=1, ...). The value of this index is an array listing the indexes
+                            of the underlying word that must contain that corresponding letter. NULL_INTEGER is used
+                            to initialize empty values.
+    :param char_nonplacements: A 2-D integer Array size=(ALPHABET_LENGTH, WORD_LENGTH). The first index corresponds to
+                               letter of alphabet (a=0, b=1, ...). The value of this index is an array listing the
+                               indexes of the underlying word that must not contain that corresponding letter.
+                               NULL_INTEGER is used to initialize empty values.
+    :param word_length: Same value as the macro WORD_LENGTH. Inputted to avoid drawing upon global variables.
 
-        :return: None
+    :return: None
 
-        This function determines what additional constraint information would be provided from the given guess word if
-        the underlying word is known. Thus, chars_not_present, char_placements, and char_nonplacements are updated
-        accordingly with this information.
-        """
+    This function determines what additional constraint information would be provided from the given guess word if
+    the underlying word is known. Thus, chars_not_present, char_placements, and char_nonplacements are updated
+    accordingly with this information.
+    """
 
     for i, guess_char in enumerate(encoded_guess_word):
         char_not_present = True
@@ -201,15 +208,18 @@ def enc_get_scores(encoded_words, chars_not_present, char_placements, char_nonpl
     :param encoded_words: A 2-D integer array size=(unknown, WORD_LENGTH). This array represents a list of words, each
                          element of the first axis corresponds to an encoded word. Each element of this word (second
                          axis) corresponds to an alphabetical letter (a=0, b=1, ..., z=25).
-    :param chars_not_present: A 1-D boolean Array size=ALPHABET_LENGTH. The first axis corresponds to letter of
-                            alphabet (a=0, b=1, ...), the value is a boolean representing whether that letter is not
-                            in the word (True=letter definitely not present, False=letter may be present).
-    :param char_placements: A 2-D integer Array size=(ALPHABET_LENGTH, WORD_LENGTH). The first axis corresponds to
-                            letter of alphabet (a=0, b=1, ...), the second axis is this list of indexes that must
-                            contain that corresponding letter. Indexes are set to NULL_INTEGER by default.
-    :param char_nonplacements: A 2-D integer Array size=(ALPHABET_LENGTH, WORD_LENGTH). The first axis corresponds to
-                               letter of alphabet (a=0, b=1, ...), the second axis is this list of indexes that are not
-                               allowed to contain that corresponding letter. Indexes are set to NULL_INTEGER by default.
+    :param chars_not_present: A 1-D boolean Array size=ALPHABET_LENGTH. The index of the array corresponds to letter of
+                              alphabet (a=0, b=1, ...), the value at that index is a boolean representing whether that
+                              letter is not in the underlying word (True=letter definitely not present,
+                              False=letter may be present).
+    :param char_placements: A 2-D integer Array size=(ALPHABET_LENGTH, WORD_LENGTH). The first index corresponds to
+                            letter of alphabet (a=0, b=1, ...). The value of this index is an array listing the indexes
+                            of the underlying word that must contain that corresponding letter. NULL_INTEGER is used
+                            to initialize empty values.
+    :param char_nonplacements: A 2-D integer Array size=(ALPHABET_LENGTH, WORD_LENGTH). The first index corresponds to
+                               letter of alphabet (a=0, b=1, ...). The value of this index is an array listing the
+                               indexes of the underlying word that must not contain that corresponding letter.
+                               NULL_INTEGER is used to initialize empty values.
     :param word_length: Same value as the macro WORD_LENGTH. Inputted to avoid drawing upon global variables.
     :param alphabet_length: Same value as the macro ALPHABET_LENGTH. Inputted to avoid drawing upon global variables.
     :param null_integer: Same value as the macro NULL_INTEGER. Inputted to avoid drawing upon global variables.
@@ -314,11 +324,11 @@ def choose_word(constraints, opening_book_directory="../files/opening_book.json"
                       word not in words_to_exclude])
     int_words = np.array([[char_to_int(c) for c in word] for word in words], dtype=np.int8)
     options = enc_get_consistent_words(int_words, chars_not_present, char_placements, char_nonplacements)
-    if len(options) == 0: return NULL_WORD
-    scores = enc_get_scores(int_words, chars_not_present, char_placements, char_nonplacements)
-    word_score_dict = {words[i]: scores[i] - word_frequency(words[i], lang='en') for i in range(len(words))}
+    if len(options) == 0:
+        return NULL_WORD
+    word_scores_array = enc_get_scores(int_words, chars_not_present, char_placements, char_nonplacements)
+    word_score_dict = {words[i]: word_scores_array[i] - word_frequency(words[i], lang='en') for i in range(len(words))}
     return min(words, key=word_score_dict.get)
-
 
 
 def construct_opening_book(opening_book_directory="../files/opening_book.json"):
@@ -347,7 +357,7 @@ def construct_opening_book(opening_book_directory="../files/opening_book.json"):
         constraints.grid[0][i].char = first_word[i]
 
     # Determine second word choice given first word choice.
-    color_possibilities = [iter(Color) for i in range(WORD_LENGTH)]
+    color_possibilities = [iter(Color) for _ in range(WORD_LENGTH)]
     for color_choice in itertools.product(*color_possibilities):
         for i, c in enumerate(color_choice):
             constraints.grid[0][i].color = c

@@ -4,11 +4,9 @@ import string
 
 from WordleSolver import *
 
-
 # Define Static Parameters
 BOX_SIZE = 100
 NULL_WORD = NULL_CHAR * ROWS
-
 
 # Initialize Game
 pygame.init()
@@ -16,7 +14,6 @@ DIMENSIONS = (COLUMNS * BOX_SIZE, (ROWS + 1) * BOX_SIZE)
 screen = pygame.display.set_mode(DIMENSIONS)
 pygame.display.set_caption("Wordle Solver")
 pygame.display.set_icon(pygame.image.load('../skins/Icon.png'))
-
 
 # Load Images
 GREEN_IMAGE = pygame.image.load('../skins/colors/Green.png')
@@ -26,12 +23,18 @@ YELLOW_IMAGE = pygame.image.load('../skins/colors/Yellow.png')
 SELECTED_IMAGE = pygame.image.load('../skins/misc/Selected.png')
 TEXTBOX_IMAGE = pygame.image.load('../skins/misc/Textbox.png')
 
-char_dict = {}
+char_image_dict = {}
 for c in string.ascii_lowercase:
-    char_dict[c] = pygame.image.load('../skins/letters/' + c + '.png')
-char_dict[NULL_CHAR] = pygame.image.load('../skins/letters/null.png')
-box_dict = {Color.GREEN: GREEN_IMAGE, Color.GREY: GREY_IMAGE, Color.YELLOW: YELLOW_IMAGE}
+    char_image_dict[c] = pygame.image.load('../skins/letters/' + c + '.png')
+char_image_dict[NULL_CHAR] = pygame.image.load('../skins/letters/null.png')
+color_image_dict = {Color.GREEN: GREEN_IMAGE, Color.GREY: GREY_IMAGE, Color.YELLOW: YELLOW_IMAGE}
 
+# Key correspondence.
+key_char_dict = {pygame.K_a: 'a', pygame.K_b: 'b', pygame.K_c: 'c', pygame.K_d: 'd', pygame.K_e: 'e', pygame.K_f: 'f',
+                 pygame.K_g: 'g', pygame.K_h: 'h', pygame.K_j: 'j', pygame.K_k: 'k', pygame.K_l: 'l', pygame.K_m: 'm',
+                 pygame.K_n: 'n', pygame.K_o: 'o', pygame.K_p: 'p', pygame.K_q: 'q', pygame.K_r: 'r', pygame.K_s: 's',
+                 pygame.K_t: 't', pygame.K_u: 'u', pygame.K_v: 'v', pygame.K_w: 'w', pygame.K_x: 'x', pygame.K_y: 'y',
+                 pygame.K_z: 'z'}
 
 # Initialize dynamic variables.
 selected_row = 0
@@ -39,7 +42,6 @@ selected_column = 0
 choice_word = NULL_WORD
 constraints = Constraints()
 words_to_exclude = set()
-
 
 # Main loop.
 while True:
@@ -90,33 +92,10 @@ while True:
 
             # Type letter.
             char = NULL_CHAR
-            if event.key == pygame.K_a: char = 'a'
-            if event.key == pygame.K_b: char = 'b'
-            if event.key == pygame.K_c: char = 'c'
-            if event.key == pygame.K_d: char = 'd'
-            if event.key == pygame.K_e: char = 'e'
-            if event.key == pygame.K_f: char = 'f'
-            if event.key == pygame.K_g: char = 'g'
-            if event.key == pygame.K_h: char = 'h'
-            if event.key == pygame.K_i: char = 'i'
-            if event.key == pygame.K_j: char = 'j'
-            if event.key == pygame.K_k: char = 'k'
-            if event.key == pygame.K_l: char = 'l'
-            if event.key == pygame.K_m: char = 'm'
-            if event.key == pygame.K_n: char = 'n'
-            if event.key == pygame.K_o: char = 'o'
-            if event.key == pygame.K_p: char = 'p'
-            if event.key == pygame.K_q: char = 'q'
-            if event.key == pygame.K_r: char = 'r'
-            if event.key == pygame.K_s: char = 's'
-            if event.key == pygame.K_t: char = 't'
-            if event.key == pygame.K_u: char = 'u'
-            if event.key == pygame.K_v: char = 'v'
-            if event.key == pygame.K_w: char = 'w'
-            if event.key == pygame.K_x: char = 'x'
-            if event.key == pygame.K_y: char = 'y'
-            if event.key == pygame.K_z: char = 'z'
-
+            for key in key_char_dict:
+                if event.key == key:
+                    char = key_char_dict[key]
+                    break
             if char != NULL_CHAR:
                 if constraints.get_first_blank() is not None:
                     selected_row, selected_column = constraints.get_first_blank()
@@ -140,7 +119,7 @@ while True:
                     if constraints.get_last_char() is not None:
                         selected_row, selected_column = constraints.get_last_char()
                     else:
-                        selected_row, selected_colelumn = 0, 0
+                        selected_row, selected_column = 0, 0
 
             # Calculate best word choice.
             if event.key == pygame.K_RETURN:
@@ -157,21 +136,22 @@ while True:
                 words_to_exclude.clear()
                 choice_word = choose_word(constraints, words_to_exclude=words_to_exclude)
 
-    # Display Everything
+    # Display wordle grid.
     for row in range(ROWS):
         for column in range(COLUMNS):
             color = constraints.grid[row][column].color
-            if color in box_dict:
-                screen.blit(box_dict[color], (column * BOX_SIZE, row * BOX_SIZE))
+            if color in color_image_dict:
+                screen.blit(color_image_dict[color], (column * BOX_SIZE, row * BOX_SIZE))
             char = constraints.grid[row][column].char
             if char != NULL_CHAR:
-                screen.blit(char_dict[char], (column * BOX_SIZE, row * BOX_SIZE))
+                screen.blit(char_image_dict[char], (column * BOX_SIZE, row * BOX_SIZE))
     screen.blit(SELECTED_IMAGE, (selected_column * BOX_SIZE, selected_row * BOX_SIZE))
 
+    # Display solution word.
     screen.blit(TEXTBOX_IMAGE, (0, ROWS * BOX_SIZE))
     for column in range(COLUMNS):
         if choice_word != NULL_WORD:
             char = choice_word[column]
-            screen.blit(char_dict[char], (column * BOX_SIZE, ROWS * BOX_SIZE))
+            screen.blit(char_image_dict[char], (column * BOX_SIZE, ROWS * BOX_SIZE))
 
     pygame.display.update()
