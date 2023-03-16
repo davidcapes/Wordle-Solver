@@ -66,12 +66,11 @@ def enc_is_word_consistent(encoded_word, chars_not_present, char_placements, cha
 
     # Ensure consistency with placements.
     for c in range(alphabet_length):
-        if char_placements[c][0] != NULL_INTEGER:
-            for position in char_placements[c]:
-                if position == NULL_INTEGER:
-                    break
-                elif encoded_word[position] != c:
-                    return False
+        for position in char_placements[c]:
+            if position == NULL_INTEGER:
+                break
+            elif encoded_word[position] != c:
+                return False
 
     # Ensure consistency with nonplacements.
     for c in range(alphabet_length):
