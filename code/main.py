@@ -6,11 +6,12 @@ from WordleSolver import *
 
 # Define Static Parameters
 BOX_SIZE = 100
-NULL_WORD = NULL_CHAR * ROWS
+DIMENSIONS = (COLUMNS * BOX_SIZE, (ROWS + 1) * BOX_SIZE)
+
+NULL_WORD = [NULL_CHAR for _ in range(ROWS)]
 
 # Initialize Game
 pygame.init()
-DIMENSIONS = (COLUMNS * BOX_SIZE, (ROWS + 1) * BOX_SIZE)
 screen = pygame.display.set_mode(DIMENSIONS)
 pygame.display.set_caption("Wordle Solver")
 pygame.display.set_icon(pygame.image.load('../skins/Icon.png'))
@@ -51,7 +52,7 @@ while True:
         if event.type == pygame.QUIT:
             sys.exit()
 
-        # Select Different Square with Mouse
+        # Select different cell with mouse.
         if event.type == pygame.MOUSEBUTTONDOWN:
             clicked_row = event.pos[1] // BOX_SIZE
             clicked_column = event.pos[0] // BOX_SIZE
@@ -68,11 +69,11 @@ while True:
         # Get keyboard key.
         if event.type == pygame.KEYDOWN:
 
-            # Exit Window.
+            # Exit window.
             if event.key == pygame.K_ESCAPE:
                 exit()
 
-            # Change square clor.
+            # Change cell color.
             if event.key == pygame.K_SPACE:
                 if constraints.grid[selected_row][selected_column].char != NULL_CHAR:
                     color = constraints.grid[selected_row][selected_column].color.next_color()
@@ -109,11 +110,6 @@ while True:
                     selected_row, selected_column = constraints.get_last_char()
                     constraints.grid[selected_row][selected_column].char = NULL_CHAR
                     constraints.grid[selected_row][selected_column].color = Color.GREY
-                    if selected_column > 0:
-                        selected_column -= 1
-                    elif selected_row > 0:
-                        selected_row -= 1
-                        selected_column = COLUMNS - 1
                     choice_word = NULL_WORD
                     words_to_exclude.clear()
                     if constraints.get_last_char() is not None:
@@ -121,17 +117,17 @@ while True:
                     else:
                         selected_row, selected_column = 0, 0
 
-            # Calculate best word choice.
+            # Calculate best choice word.
             if event.key == pygame.K_RETURN:
                 choice_word = choose_word(constraints, words_to_exclude=words_to_exclude)
 
-            # Exclude current guess from guess words.
+            # Exclude current choice word from possible guess words.
             if event.key == pygame.K_RSHIFT or event.key == pygame.K_LSHIFT:
                 if choice_word not in words_to_exclude and choice_word != NULL_WORD:
                     words_to_exclude.add(choice_word)
                 choice_word = choose_word(constraints, words_to_exclude=words_to_exclude)
 
-            # Clear excluded word lista
+            # Clear list of excluded guess words.
             if event.key == pygame.K_TAB:
                 words_to_exclude.clear()
                 choice_word = choose_word(constraints, words_to_exclude=words_to_exclude)
