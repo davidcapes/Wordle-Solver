@@ -61,7 +61,7 @@ class Constraints:
                 if self.grid[r][c].char != NULL_CHAR:
                     color = self.grid[r][c].color
                     char = self.grid[r][c].char
-                    hashable.append((color, char))
+                    hashable.append((color, char, c))
         hashable.sort()
         return str(tuple(hashable))
 

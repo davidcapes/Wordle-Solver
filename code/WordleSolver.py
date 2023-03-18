@@ -27,7 +27,7 @@ def int_to_char(input_int):
 # Constraint Storage Structures
 extra_words = ["manly", "mucky", "latte", "imply", "daily", "lover", "rerun", "unfit"]
 fake_words = {'brady', 'turin', 'dylan', 'dolan', 'lanka', 'milan', 'cathy', "alton", 'mckee', 'mcgee', 'poole',
-              'della', 'dinah', 'syria', 'akron'}
+              'della', 'dinah', 'syria', 'akron', 'tarie', 'tored', 'colan', 'nilot', 'telyn', 'topsl', 'duole'}
 
 
 @njit
@@ -257,7 +257,7 @@ def enc_get_scores(encoded_words, chars_not_present, char_placements, char_nonpl
             score_increment = max(0, score_increment - 1)
             score += score_increment
 
-        # Slightly bias the score to favour consistant guess words.
+        # Slightly bias the score to favour consistent guess words.
         if not enc_is_word_consistent(guess_word, chars_not_present, char_placements, char_nonplacements,
                                       word_length, alphabet_length):
             score += 1
@@ -285,7 +285,9 @@ def choose_word(constraints, opening_book_directory="../files/opening_book.json"
                 opening_book = dict(json.load(openfile))
             if str(constraints) in opening_book:
                 return opening_book[str(constraints)]
-        except json.decoder.JSONDecodeError or FileNotFoundError:
+        except json.decoder.JSONDecodeError:
+            pass
+        except FileNotFoundError:
             pass
 
     # Convert constraints into relevant data structures.
@@ -330,9 +332,10 @@ def choose_word(constraints, opening_book_directory="../files/opening_book.json"
     return min(words, key=word_score_dict.get)
 
 
-def construct_opening_book(opening_book_directory="../files/opening_book.json"):
+def construct_opening_book(opening_book_directory="../files/opening_book.json", print_progress=True):
     """
-    :param opening_book_directory: A directory on where to save the opening book file
+    :param opening_book_directory: A directory on where to save the opening book file.
+    :param print_progress: A boolean corresponding to whether to print a message every time a solution is calculated.
     :return: None
 
     This void function constructs a json file in the inputted directory that corresponds to an opening book for wordle
@@ -345,7 +348,9 @@ def construct_opening_book(opening_book_directory="../files/opening_book.json"):
         with open(opening_book_directory, 'r') as f:
             json_object = json.load(f)
             opening_book = dict(json_object)
-    except json.decoder.JSONDecodeError or FileNotFoundError:
+    except json.decoder.JSONDecodeError:
+        pass
+    except FileNotFoundError:
         pass
     constraints = Constraints()
 
@@ -354,8 +359,10 @@ def construct_opening_book(opening_book_directory="../files/opening_book.json"):
     opening_book[str(constraints)] = first_word
     for i in range(WORD_LENGTH):
         constraints.grid[0][i].char = first_word[i]
+    print("First word chosen:", first_word, "(1/1)")
 
     # Determine second word choice given first word choice.
+    m = 0
     color_possibilities = [iter(Color) for _ in range(WORD_LENGTH)]
     for color_choice in itertools.product(*color_possibilities):
         for i, c in enumerate(color_choice):
@@ -365,6 +372,10 @@ def construct_opening_book(opening_book_directory="../files/opening_book.json"):
             opening_book[str(constraints)] = choice_word
         for i, c in enumerate(color_choice):
             constraints.grid[0][i].color = Color.GREY
+
+        m += 1
+        if print_progress:
+            print("Second word chosen:", choice_word, "(" + str(m) + "/" + str(len(Color) ** WORD_LENGTH) + ")")
 
     # Add obtained information to json files.
     with open(opening_book_directory, 'w') as f:

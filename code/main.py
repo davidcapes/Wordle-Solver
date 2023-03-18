@@ -9,6 +9,7 @@ BOX_SIZE = 100
 DIMENSIONS = (COLUMNS * BOX_SIZE, (ROWS + 1) * BOX_SIZE)
 
 NULL_WORD = [NULL_CHAR for _ in range(ROWS)]
+ALPHABET = string.ascii_lowercase
 
 # Initialize Game
 pygame.init()
@@ -25,17 +26,10 @@ SELECTED_IMAGE = pygame.image.load('../skins/misc/Selected.png')
 TEXTBOX_IMAGE = pygame.image.load('../skins/misc/Textbox.png')
 
 char_image_dict = {}
-for c in string.ascii_lowercase:
+for c in ALPHABET:
     char_image_dict[c] = pygame.image.load('../skins/letters/' + c + '.png')
 char_image_dict[NULL_CHAR] = pygame.image.load('../skins/letters/null.png')
 color_image_dict = {Color.GREEN: GREEN_IMAGE, Color.GREY: GREY_IMAGE, Color.YELLOW: YELLOW_IMAGE}
-
-# Key correspondence.
-key_char_dict = {pygame.K_a: 'a', pygame.K_b: 'b', pygame.K_c: 'c', pygame.K_d: 'd', pygame.K_e: 'e', pygame.K_f: 'f',
-                 pygame.K_g: 'g', pygame.K_h: 'h', pygame.K_j: 'j', pygame.K_k: 'k', pygame.K_l: 'l', pygame.K_m: 'm',
-                 pygame.K_n: 'n', pygame.K_o: 'o', pygame.K_p: 'p', pygame.K_q: 'q', pygame.K_r: 'r', pygame.K_s: 's',
-                 pygame.K_t: 't', pygame.K_u: 'u', pygame.K_v: 'v', pygame.K_w: 'w', pygame.K_x: 'x', pygame.K_y: 'y',
-                 pygame.K_z: 'z'}
 
 # Initialize dynamic variables.
 selected_row = 0
@@ -93,9 +87,9 @@ while True:
 
             # Type letter.
             char = NULL_CHAR
-            for key in key_char_dict:
-                if event.key == key:
-                    char = key_char_dict[key]
+            for c in ALPHABET:
+                if event.key == pygame.key.key_code(c):
+                    char = c
                     break
             if char != NULL_CHAR:
                 if constraints.get_first_blank() is not None:
@@ -117,7 +111,7 @@ while True:
                     else:
                         selected_row, selected_column = 0, 0
 
-            # Calculate best choice word.
+            # Calculate the best choice word.
             if event.key == pygame.K_RETURN:
                 choice_word = choose_word(constraints, words_to_exclude=words_to_exclude)
 
